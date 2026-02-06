@@ -110,20 +110,70 @@ class HintService{
 }
 
 /**
+ * Custom exception used when user input fails validation.
+ *
+ * This allows the game to fail gracefully with a
+ * meaningful message.
+ */
+class InvalidInputException extends Exception{
+
+    public InvalidInputException(String message){
+        super(message);
+    }
+}
+
+/**
+ * Handles validation of user input before it is used in game logic.
+ *
+ * All input checks are centralized to keep main() clean and focused.
+ */
+class ValidationService{
+
+    /*
+     * Validates raw user input.
+     *
+     * Flow:
+     * - Convert input to integer
+     * - Check allowed range
+     * - Throw custom exception if invalid
+     */
+    public static int validateInput(String input) throws InvalidInputException{
+
+        try{
+            int value = Integer.parseInt(input);
+
+            if(value < 1 || value > 100){
+                throw new InvalidInputException("Number must be between 1 and 100");
+            }
+
+            return value;
+
+        } catch(NumberFormatException e){
+            throw new InvalidInputException("Invalid input. Please enter numbers only.");
+        }
+    }
+}
+
+/**
  * MAIN CLASS
  *
- * Coordinates the game flow:
- * 1. Initialize game
- * 2. Accept user guesses
- * 3. Validate guesses
- * 4. Stop when game ends
+ * Use Case 4: Error Handling & Validation
+ *
+ * This class coordinates the game execution while ensuring
+ * all user inputs are safely validated before processing.
+ *
+ * Responsibilities:
+ * - Initialization game configuration
+ * - Accept user input
+ * - Validate input using ValidationService
+ * - Handles game flow without crashing on invalid input
  *
  * @author Developer
- * @version 2.0
+ * @version 4.0
  */
 public class GuessingApp {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InvalidInputException{
 
         System.out.println("Welcome to the Guessing App");
 
@@ -132,18 +182,29 @@ public class GuessingApp {
 
         Scanner scanner = new Scanner(System.in);
         int attempts = 0;
+        int hintsUsed = 0;
 
-        /*
-         * Game loop runs until the player
-         * exhausts the maximum attempts.
-         */
-        while (attempts<gameConfig.getMaxAttempts()){
-
+        while(attempts<gameConfig.getMaxAttempts()){
             System.out.println("Enter your guess: ");
-            int guess = scanner.nextInt();
+
+            /*
+             * User input is validated before
+             * being used in the game logic.
+             */
+            int guess=ValidationService.validateInput(scanner.nextLine());
             attempts++;
 
-            String result = GuessValidator.validateGuess(guess,gameConfig.getTargetNumber());
+            String result=GuessValidator.validateGuess(guess, gameConfig.getTargetNumber());
+
+            /*
+             * A hint is generated only after
+             * an incorrect guess and within
+             * the allowed hint limit.
+             */
+            if(!"CORRECT".equals(result) && hintsUsed < gameConfig.getMaxHints()){
+                hintsUsed++;
+                System.out.println(HintService.generateHint(gameConfig.getTargetNumber(), hintsUsed));
+            }
 
             System.out.println(result);
 
