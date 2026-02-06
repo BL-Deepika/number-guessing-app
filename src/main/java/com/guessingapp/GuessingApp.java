@@ -194,89 +194,115 @@ class StorageService{
 }
 
 /**
+ * Handles game lifecycle decisions.
+ * This class is responsible for deciding
+ * whether the game should restart or exit*
+ * based on user choice.
+ */
+class GameController {
+    /*
+     * Asks the player if they want to restart the game after completion.
+     * Returns true if the game should restart false if the application should exit.
+     */
+    public static boolean restartGame(Scanner scanner) {
+        System.out.print("Do you want to play again? (yes/no): ");
+        return scanner.nextLine().equalsIgnoreCase( "yes");
+    }
+}
+
+/**
  * MAIN CLASS
  *
- * Use Case 5: Game Result Storage
+ * Use Case 6: Game Restart & Exit
  *
- * This class coordinates the complete game flow
- * and persists the final result after completion.
+ * This class coordinates the complete game lifecycle,
+ * allowing the player to replay or exit gracefully.
  *
  * Responsibilities:
- * - Initialize game configuration
- * - Accept and validate user guesses
- * - Generate hints when applicable
- * - Store game result at the end
+ * - Start a new game session
+ * - Execute the guessing flow
+ * - Persist game results
+ * - Restart or exit based on user choice
  *
  * @author Developer
- * @version 5.0
+ * @version 6.0
  */
 public class GuessingApp {
 
     public static void main(String[] args) throws InvalidInputException{
 
         Scanner scanner = new Scanner(System.in);
+        boolean restart;
 
         System.out.println("===========================");
         System.out.println("Welcome to the Guessing App");
         System.out.println("===========================");
 
-        /*
-         * Player name is captured once
-         * and stored along with game results.
-         */
-        System.out.println("Enter Player Name: ");
-        String player = scanner.nextLine();
+        do {
+            System.out.println("Enter Player Name: ");
+            String player = scanner.nextLine();
 
-        GameConfig gameConfig = new GameConfig();
-        gameConfig.showRules();
+            GameConfig gameConfig = new GameConfig();
+            gameConfig.showRules();
 
-        int attempts = 0;
-        int hintsUsed = 0;
-
-        /*
-         * Tracks whether the player
-         * successfully guessed the number.
-         */
-        boolean win = false;
-
-        /*
-         * Game loop runs until the player
-         * exhausts the maximum attempts.
-         */
-
-        while(attempts<gameConfig.getMaxAttempts()){
-            System.out.println("Enter your guess: ");
+            int attempts = 0;
+            int hintsUsed = 0;
 
             /*
-             * User input is validated before
-             * being used in the game logic.
+             * Tracks whether the player
+             * successfully guessed the number.
              */
-            int guess=ValidationService.validateInput(scanner.nextLine());
-            attempts++;
-
-            String result=GuessValidator.validateGuess(guess, gameConfig.getTargetNumber());
+            boolean win = false;
 
             /*
-             * A hint is generated only after
-             * an incorrect guess and within
-             * the allowed hint limit.
+             * Inner loop handles the guessing
+             * logic for a single game session.
              */
-            if(!"CORRECT".equals(result) && hintsUsed < gameConfig.getMaxHints()){
-                hintsUsed++;
-                System.out.println(HintService.generateHint(gameConfig.getTargetNumber(), hintsUsed));
+            while (attempts < gameConfig.getMaxAttempts()) {
+                System.out.println("Enter your guess: ");
+
+                /*
+                 * User input is validated before
+                 * being used in the game logic.
+                 */
+                int guess = ValidationService.validateInput(scanner.nextLine());
+                attempts++;
+
+                String result = GuessValidator.validateGuess(guess, gameConfig.getTargetNumber());
+
+                /*
+                 * A hint is generated only after
+                 * an incorrect guess and within
+                 * the allowed hint limit.
+                 */
+                if (!"CORRECT".equals(result) && hintsUsed < gameConfig.getMaxHints()) {
+                    hintsUsed++;
+                    System.out.println(HintService.generateHint(gameConfig.getTargetNumber(), hintsUsed));
+                }
+
+                System.out.println(result);
+
+                /*
+                 * Stop the loop immediately
+                 * if the correct number is guessed.
+                 */
+                if ("CORRECT".equals(result)) {
+                    break;
+                }
             }
 
-            System.out.println(result);
+            /*
+             * Final game result is persisted
+             * after the current session ends.
+             */
+            StorageService.saveResult(player, attempts, win);
 
             /*
-             * Stop the loop immediately
-             * if the correct number is guessed.
+             * Player decides whether to
+             * restart the game or exit
              */
-            if ("CORRECT".equals(result)){
-                break;
-            }
-        }
+            restart = GameController.restartGame(scanner);
 
-        StorageService.saveResult(player, attempts, win);
+        } while(restart);
     }
 }
