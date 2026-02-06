@@ -1,6 +1,7 @@
 package com.guessingapp;
 
 import java.util.Random;
+import java.util.Scanner;
 
 /**
  * Use Case 1: Game Initialization
@@ -15,6 +16,7 @@ import java.util.Random;
  * - Constructor initialization
  * - Random number generation
  */
+
 class GameConfig{
 
     private final int MIN = 1;
@@ -27,44 +29,97 @@ class GameConfig{
      * Constructor is automatically called when a GameConfig object is created.
      * It initializes the random target number for the game.
      */
-     public GameConfig() {
-         Random random = new Random();
-         this.targetNumber = random.nextInt(MAX - MIN + 1) + MIN;
-     }
+    public GameConfig() {
+        Random random = new Random();
+        this.targetNumber = random.nextInt(MAX - MIN + 1) + MIN;
+    }
 
-     public int getTargetNumber() {
-         return targetNumber;
-     }
-     public int getMaxAttempts() {
-         return MAX_ATTEMPTS;
-     }
-     public int getMaxHints() {
-         return MAX_HINTS;
-     }
-     public void showRules() {
-         System.out.println("Guess a number between " + MIN + " and " + MAX);
-         System.out.println("You have " + MAX_ATTEMPTS + " attempts. ");
-         System.out.println("Hints will be provided after wrong guesses.\n");
-     }
+    public int getTargetNumber() {
+        return targetNumber;
+    }
+    public int getMaxAttempts() {
+        return MAX_ATTEMPTS;
+    }
+    public int getMaxHints() {
+        return MAX_HINTS;
+    }
+    public void showRules() {
+        System.out.println("Guess a number between " + MIN + " and " + MAX);
+        System.out.println("You have " + MAX_ATTEMPTS + " attempts. ");
+        System.out.println("Hints will be provided after wrong guesses.\n");
+    }
 }
 
 /**
- * GuessingApp - Use Case 1: Game Initialization
+ * Use Case 2: User Guess Submission
  *
- * This class serves as the application entry point
- * It initializes the game configuration and displays game rules
+ * This class is responsible for comparing
+ * the user's guess with the target number.
  *
- * No user input or gameplay logic is implemented at this stage.
+ * It does NOT handle input or output.
+ */
+class GuessValidator {
+
+    /**
+     * Compares guess with target and
+     * returns the comparison result.
+     */
+    public static String validateGuess(int guess, int target) {
+
+        if (guess == target) {
+            return "CORRECT";
+        } else if (guess < target) {
+            return "LOW";
+        }
+        return "HIGH";
+    }
+}
+
+/**
+ * MAIN CLASS
+ *
+ * Coordinates the game flow:
+ * 1. Initialize game
+ * 2. Accept user guesses
+ * 3. Validate guesses
+ * 4. Stop when game ends
  *
  * @author Developer
- * @version 1.0
+ * @version 2.0
  */
 public class GuessingApp {
 
     public static void main(String[] args) {
 
         System.out.println("Welcome to the Guessing App");
+
         GameConfig gameConfig = new GameConfig();
         gameConfig.showRules();
+
+        Scanner scanner = new Scanner(System.in);
+        int attempts = 0;
+
+        /*
+         * Game loop runs until the player
+         * exhausts the maximum attempts.
+         */
+        while (attempts<gameConfig.getMaxAttempts()){
+
+            System.out.println("Enter your guess: ");
+            int guess = scanner.nextInt();
+            attempts++;
+
+            String result = GuessValidator.validateGuess(guess,gameConfig.getTargetNumber());
+
+            System.out.println(result);
+
+            /*
+             * Stop the loop immediately
+             * if the correct number is guessed.
+             */
+            if ("CORRECT".equals(result)){
+                break;
+            }
+        }
     }
 }
